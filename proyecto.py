@@ -6,7 +6,7 @@ import streamlit as st
 from scipy.stats import kurtosis, skew, norm, t
 
 # Configuración inicial de la página
-st.set_page_config(page_title="Análisis de Riesgo Financiero", layout="wide")
+st.set_page_config(page_title="Proyecto 1 MCF", layout="wide")
 st.title("Proyecto 1: Cálculo de Value-At-Risk y Expected Shortfall")
 
 # Funciones para descarga y cálculo de datos
