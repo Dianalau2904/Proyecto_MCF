@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from scipy.stats import kurtosis, skew, norm, t
 
+
+# Configuración inicial de la página
+st.set_page_config(page_title="Análisis de Riesgo Financiero", layout="wide")
+st.title("Proyecto 1, calculo de Value-At-Risk y de Expected Shortfall.")
 # Funciones MCF integradas 
 
 def obtener_datos(stocks):
@@ -162,3 +166,81 @@ ax.legend()
 
 # Mostrar gráfico
 st.pyplot(fig)
+
+# Función para contar violaciones
+def contar_violaciones(returns, risk_measure):
+    violations = returns < risk_measure
+    num_violations = violations.sum()
+    violation_percentage = (num_violations / len(returns)) * 100
+    return num_violations, violation_percentage
+
+# Preparar los datos para el análisis de violaciones
+returns_for_test = df_rendimientos['NVDA'].iloc[window_size:]
+
+# Diccionario con medidas de riesgo y sus nombres
+risk_measures = {
+    'VaR 95% Paramétrico': rolling_results_df['VaR_95_Rolling'],
+    'VaR 99% Paramétrico': rolling_results_df['VaR_99_Rolling'],
+    'VaR 95% Histórico': rolling_results_df['VaR_95_Rolling_Hist'],
+    'VaR 99% Histórico': rolling_results_df['VaR_99_Rolling_Hist'],
+    'ES 95% Paramétrico': rolling_results_df['ES_95_Rolling'],
+    'ES 99% Paramétrico': rolling_results_df['ES_99_Rolling'],
+    'ES 95% Histórico': rolling_results_df['ES_95_Rolling_Hist'],
+    'ES 99% Histórico': rolling_results_df['ES_99_Rolling_Hist']
+}
+
+# Calcular violaciones para cada medida de riesgo y almacenar resultados
+violation_results = {
+    'Número de violaciones': [],
+    'Porcentaje de violaciones': []
+}
+
+for measure_name, measure_values in risk_measures.items():
+    violations, violation_percent = contar_violaciones(returns_for_test, measure_values)
+    violation_results['Número de violaciones'].append(violations)
+    violation_results['Porcentaje de violaciones'].append(violation_percent)
+
+# Crear DataFrame para los resultados
+violation_results_df = pd.DataFrame(violation_results, index=risk_measures.keys())
+
+# Mostrar resultados en Streamlit
+st.subheader("Resultados de violaciones de VaR y ES")
+st.dataframe(violation_results_df)
+
+# Calcular la volatilidad móvil
+q_95 = norm.ppf(0.05)
+q_99 = norm.ppf(0.01)
+rolling_vol = df_rendimientos['NVDA'].rolling(window=window_size).std()
+rolling_var_95 = q_95 * rolling_vol
+rolling_var_99 = q_99 * rolling_vol
+
+# Graficar los resultados en Streamlit
+st.subheader("Gráfica de VaR con Volatilidad Móvil")
+fig, ax = plt.subplots(figsize=(12,6))
+ax.plot(df_rendimientos.index, df_rendimientos['NVDA'], label='Retornos', alpha=0.5)
+ax.plot(df_rendimientos.index, rolling_var_95, label='VaR 95% (Volatilidad Móvil)', linestyle='dashed')
+ax.plot(df_rendimientos.index, rolling_var_99, label='VaR 99% (Volatilidad Móvil)', linestyle='dashed')
+ax.legend()
+ax.set_title('VaR con Volatilidad Móvil')
+ax.set_xlabel('Fecha')
+ax.set_ylabel('VaR')
+st.pyplot(fig)
+
+# Evaluación de eficiencia contando violaciones
+violaciones = {'VaR_95': 0, 'VaR_99': 0}
+
+total_pruebas = len(df_rendimientos) - window_size
+for i in range(window_size, len(df_rendimientos)):
+    r_t = df_rendimientos['NVDA'].iloc[i]
+    if r_t < rolling_var_95.iloc[i]:
+        violaciones['VaR_95'] += 1
+    if r_t < rolling_var_99.iloc[i]:
+        violaciones['VaR_99'] += 1
+
+# Calcular porcentaje de violaciones
+violaciones_pct = {key: (value / total_pruebas) * 100 for key, value in violaciones.items()}
+
+# Mostrar resultados en Streamlit
+violaciones_df = pd.DataFrame([violaciones, violaciones_pct], index=['Violaciones', 'Porcentaje (%)']).T
+st.subheader("Número y porcentaje de violaciones")
+st.dataframe(violaciones_df)
