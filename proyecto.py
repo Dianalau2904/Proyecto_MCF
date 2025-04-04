@@ -199,7 +199,10 @@ tabs = st.tabs(["📊 Resultados VaR/CVaR", "📈 Histograma VaR", "📉 VaR/ES 
 
 with tabs[0]:
     st.subheader("Tabla de Resultados de VaR y CVaR")
-    st.dataframe(resultados_df.style.format("{:.2f}"))
+    st.dataframe(resultados_df.style.format("{:.2f}")
+                 .background_gradient(cmap='Blues', axis=None)
+                 .set_table_styles([{'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', 'black'), ('font-weight', 'bold')]},
+                                    {'selector': 'td', 'props': [('border', '1px solid #d0d0d0')]}]))
 
 with tabs[1]:
     st.subheader("Histograma de Rendimientos con VaR y CVaR")
@@ -212,8 +215,14 @@ with tabs[2]:
 with tabs[3]:
     st.subheader("Violaciones a VaR y Expected Shortfall")
     st.caption("Violaciones en medidas rolling")
-    st.dataframe(violation_results_df.style.format("{:.2f}"))
+    st.dataframe(violation_results_df.style.format("{:.2f}")
+                 .background_gradient(cmap='YlGnBu', axis=None)
+                 .set_table_styles([{'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', 'black'), ('font-weight', 'bold')]},
+                                    {'selector': 'td', 'props': [('border', '1px solid #d0d0d0')]}]))
     st.caption("Violaciones usando volatilidad móvil")
-    st.dataframe(violaciones_df.style.format("{:.2f}"))
+    st.dataframe(violaciones_df.style.format("{:.2f}")
+                 .background_gradient(cmap='YlOrRd', axis=None)
+                 .set_table_styles([{'selector': 'th', 'props': [('background-color', '#f0f0f0'), ('color', 'black'), ('font-weight', 'bold')]},
+                                    {'selector': 'td', 'props': [('border', '1px solid #d0d0d0')]}]))
     st.subheader("Gráfica de VaR con Volatilidad Móvil")
     st.pyplot(fig3)
